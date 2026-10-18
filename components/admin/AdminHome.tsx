@@ -27,13 +27,13 @@ export function AdminHome({
         name: String(data.get("name") ?? ""),
         email: String(data.get("email") ?? ""),
         password: String(data.get("password") ?? ""),
-        role: String(data.get("role") ?? ""),
+        role: "admin",
       }),
     });
     const body = (await response.json().catch(() => null)) as { message?: string } | null;
     setPending(false);
     if (!response.ok) {
-      setMessage(body?.message || "Could not add that person.");
+      setMessage(body?.message || "Could not add that admin.");
       return;
     }
     setMessage("Added.");
@@ -56,7 +56,7 @@ export function AdminHome({
       {user.role === "admin" ? (
         <form onSubmit={addUser} className="mt-10 max-w-xl border-2 border-black p-5">
           <h2 className="text-2xl tracking-[-0.03em]" style={{ fontFamily: sans, fontWeight: 560 }}>
-            Add a person
+            Add an admin
           </h2>
           <label className="mt-4 block">
             <span className="text-[11px] uppercase tracking-[0.16em]" style={{ fontFamily: mono }}>
@@ -76,16 +76,6 @@ export function AdminHome({
             </span>
             <input required name="password" type="password" minLength={8} className="mt-2 h-12 w-full border-2 border-black px-3 outline-none" style={{ fontFamily: sans }} />
           </label>
-          <label className="mt-4 block">
-            <span className="text-[11px] uppercase tracking-[0.16em]" style={{ fontFamily: mono }}>
-              Role
-            </span>
-            <select name="role" defaultValue="editor" className="mt-2 h-12 w-full border-2 border-black bg-white px-3 outline-none" style={{ fontFamily: sans }}>
-              <option value="admin">admin</option>
-              <option value="editor">editor</option>
-              <option value="user">user</option>
-            </select>
-          </label>
           {message ? (
             <p className="mt-4 text-sm" style={{ fontFamily: sans }}>
               {message}
@@ -102,7 +92,7 @@ export function AdminHome({
         </form>
       ) : (
         <p className="mt-10 text-sm" style={{ fontFamily: sans }}>
-          You are signed in as an editor. An admin can add other people.
+          You are signed in as an editor. An admin can add another admin.
         </p>
       )}
     </main>

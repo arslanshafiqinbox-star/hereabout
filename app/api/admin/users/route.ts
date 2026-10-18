@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/admin-auth";
-import { getUsersCollection, type UserRole } from "@/lib/mongodb";
+import { getUsersCollection } from "@/lib/mongodb";
 import { hashPassword } from "@/lib/password";
-
-const roles: UserRole[] = ["admin", "editor", "user"];
 
 export async function POST(request: Request) {
   const session = await getAdminSession();
@@ -11,22 +9,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Sign in required." }, { status: 401 });
   }
   if (session.role !== "admin") {
-    return NextResponse.json({ message: "Only an admin can add people." }, { status: 403 });
+    return NextResponse.json({ message: "Only an admin can add an admin." }, { status: 403 });
   }
 
   const body = (await request.json().catch(() => null)) as {
     name?: string;
     email?: string;
     password?: string;
-    role?: string;
   } | null;
   const name = body?.name?.trim() ?? "";
   const email = body?.email?.trim().toLowerCase() ?? "";
   const password = body?.password ?? "";
-  const role = roles.includes(body?.role as UserRole) ? (body?.role as UserRole) : null;
-  if (!name || !email || password.length < 8 || !role) {
+  const role = "admin" as const;
+  if (!name || !email || password.length < 8) {
     return NextResponse.json(
-      { message: "Name, email, a role, and a password of at least 8 characters are required." },
+      { message: "Name, email, and a password of at least 8 characters are required." },
       { status: 400 },
     );
   }

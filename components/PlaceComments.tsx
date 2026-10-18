@@ -23,6 +23,67 @@ const visitCounts = ["1", "2", "3", "multiple"] as const;
 
 type VisitCount = (typeof visitCounts)[number];
 
+function WhoYouAre({
+  role,
+  visits,
+  onRole,
+  onVisits,
+}: {
+  role: string;
+  visits: VisitCount;
+  onRole: (value: string) => void;
+  onVisits: (value: VisitCount) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-[15px]" style={{ fontFamily: sans, fontWeight: 500 }}>
+        You are
+        <span className="relative mt-2 block border border-black">
+          <select
+            value={role}
+            onChange={(event) => onRole(event.target.value)}
+            className="w-full cursor-pointer appearance-none bg-white px-3 py-2 pr-8 text-[15px] outline-none"
+            style={{ fontFamily: sans, fontWeight: 500 }}
+          >
+            {roles.map((item) => (
+              <option key={item}>{item}</option>
+            ))}
+          </select>
+          <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-[12px]" aria-hidden="true">
+            ▾
+          </span>
+        </span>
+      </label>
+      {role === "Someone who has visited" ? (
+        <fieldset className="mt-3">
+          <legend className="text-[15px]" style={{ fontFamily: sans, fontWeight: 500 }}>
+            How many times
+          </legend>
+          <span className="mt-2 inline-flex border border-black">
+            {visitCounts.map((count, index) => {
+              const selected = visits === count;
+              return (
+                <button
+                  key={count}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => onVisits(count)}
+                  className={`h-8 border-black px-3 text-[14px] ${selected ? "bg-black text-white" : "bg-white"} ${
+                    index < visitCounts.length - 1 ? "border-r" : ""
+                  }`}
+                  style={{ fontFamily: sans, fontWeight: 500 }}
+                >
+                  {count === "multiple" ? "Multiple" : count}
+                </button>
+              );
+            })}
+          </span>
+        </fieldset>
+      ) : null}
+    </div>
+  );
+}
+
 function badgeFor(role: string, visits: VisitCount) {
   if (role === "Someone who lives here") return "Lives here";
   if (role === "A day-tripper") return "Day-tripper";
@@ -115,6 +176,8 @@ export default function PlaceComments({
   const [votes, setVotes] = useState<Record<string, "up" | "down">>({});
   const [role, setRole] = useState(roles[0]);
   const [visits, setVisits] = useState<VisitCount>("1");
+  const [replyRole, setReplyRole] = useState(roles[0]);
+  const [replyVisits, setReplyVisits] = useState<VisitCount>("1");
   const [ratings, setRatings] = useState<Partial<Record<RatingKey, number>>>({});
   const [draft, setDraft] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
@@ -199,7 +262,7 @@ export default function PlaceComments({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             comment_id: parent.commentId,
-            user_type: badgeFor(role, visits),
+            user_type: badgeFor(replyRole, replyVisits),
             comment: text,
           }),
         })
@@ -414,6 +477,10 @@ export default function PlaceComments({
               votes={votes}
               replyTo={replyTo}
               replyDraft={replyDraft}
+              role={replyRole}
+              visits={replyVisits}
+              onRole={setReplyRole}
+              onVisits={setReplyVisits}
               onToggle={toggle}
               onVote={vote}
               onReplyTo={(id) => {
@@ -459,6 +526,10 @@ function CommentCard({
   votes,
   replyTo,
   replyDraft,
+  role,
+  visits,
+  onRole,
+  onVisits,
   onToggle,
   onVote,
   onReplyTo,
@@ -470,6 +541,10 @@ function CommentCard({
   votes: Record<string, "up" | "down">;
   replyTo: string | null;
   replyDraft: string;
+  role: string;
+  visits: VisitCount;
+  onRole: (value: string) => void;
+  onVisits: (value: VisitCount) => void;
   onToggle: (id: string) => void;
   onVote: (id: string, direction: "up" | "down") => void;
   onReplyTo: (id: string) => void;
@@ -487,6 +562,10 @@ function CommentCard({
         votes={votes}
         replyTo={replyTo}
         replyDraft={replyDraft}
+        role={role}
+        visits={visits}
+        onRole={onRole}
+        onVisits={onVisits}
         onVote={onVote}
         onReplyTo={onReplyTo}
         onReplyDraft={onReplyDraft}
@@ -513,6 +592,10 @@ function CommentCard({
                 votes={votes}
                 replyTo={replyTo}
                 replyDraft={replyDraft}
+                role={role}
+                visits={visits}
+                onRole={onRole}
+                onVisits={onVisits}
                 onVote={onVote}
                 onReplyTo={onReplyTo}
                 onReplyDraft={onReplyDraft}
@@ -530,6 +613,10 @@ function CommentBody({
   votes,
   replyTo,
   replyDraft,
+  role,
+  visits,
+  onRole,
+  onVisits,
   onVote,
   onReplyTo,
   onReplyDraft,
@@ -540,6 +627,10 @@ function CommentBody({
   votes: Record<string, "up" | "down">;
   replyTo: string | null;
   replyDraft: string;
+  role: string;
+  visits: VisitCount;
+  onRole: (value: string) => void;
+  onVisits: (value: VisitCount) => void;
   onVote: (id: string, direction: "up" | "down") => void;
   onReplyTo: (id: string) => void;
   onReplyDraft: (value: string) => void;
@@ -621,12 +712,13 @@ function CommentBody({
             onReply(thread.id);
           }}
         >
+          <WhoYouAre role={role} visits={visits} onRole={onRole} onVisits={onVisits} />
           <textarea
             value={replyDraft}
             onChange={(event) => onReplyDraft(event.target.value)}
             rows={3}
             placeholder="Reply"
-            className="w-full resize-y border border-black px-3 py-2 text-[15px] outline-none"
+            className="mt-3 w-full resize-y border border-black px-3 py-2 text-[15px] outline-none"
             style={{ fontFamily: sans }}
           />
           <button

@@ -1,3 +1,4 @@
+import { DatabaseNotice } from "@/components/DatabaseNotice";
 import DirectoryView from "@/components/DirectoryView";
 import { listDirectorySponsors } from "@/lib/directory-sponsors";
 import { listPublicPlaces } from "@/lib/public-places";
@@ -5,6 +6,7 @@ import { listPublicPlaces } from "@/lib/public-places";
 export const dynamic = "force-dynamic";
 
 export default async function CitiesPage() {
+  try {
   const [places, { main, sponsors }] = await Promise.all([
     listPublicPlaces("City"),
     listDirectorySponsors(),
@@ -15,4 +17,8 @@ export default async function CitiesPage() {
       <DirectoryView places={places} main={main} sponsors={sponsors} focus="City" />
     </main>
   );
+  } catch (error) {
+    console.error(error);
+    return <DatabaseNotice />;
+  }
 }

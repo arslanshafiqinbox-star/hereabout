@@ -19,11 +19,11 @@ export type DirectorySponsor = SiteSponsor;
 function serialize(doc: SiteAdvertisementDoc): SiteSponsor {
   return {
     id: String(doc._id),
-    provider: doc.provider,
-    title: doc.title,
-    tagline: doc.tagline,
-    action: doc.action,
-    link: doc.link,
+    provider: doc.provider ?? "",
+    title: doc.title ?? "",
+    tagline: doc.tagline ?? "",
+    action: doc.action ?? "",
+    link: doc.link ?? "",
     date: doc.date ?? "",
   };
 }

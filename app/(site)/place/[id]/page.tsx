@@ -1,4 +1,5 @@
-import { notFound } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
+import { DatabaseNotice } from "@/components/DatabaseNotice";
 import PlaceView from "@/components/PlaceView";
 import { placeSlug, places } from "@/lib/places";
 import { findPublicPlace } from "@/lib/public-places";
@@ -12,6 +13,7 @@ type PlacePageProps = {
 };
 
 export default async function PlacePage({ params }: PlacePageProps) {
+  try {
   const { id } = await params;
   const fromDb = await findPublicPlace(id);
   const place =
@@ -32,4 +34,9 @@ export default async function PlacePage({ params }: PlacePageProps) {
       />
     </main>
   );
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error(error);
+    return <DatabaseNotice />;
+  }
 }

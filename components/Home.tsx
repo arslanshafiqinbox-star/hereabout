@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DatabaseNotice } from "@/components/DatabaseNotice";
 import SearchBar from "@/components/SearchBar";
 import { listSiteSponsors, type SiteSponsor } from "@/lib/directory-sponsors";
 import { listPublicPlaces, findFeaturedPlace, type PublicPlace } from "@/lib/public-places";
@@ -8,8 +9,9 @@ const sans =
 const mono = "var(--font-plex-mono), ui-monospace, monospace";
 const serif = "var(--font-newsreader), Georgia, 'Times New Roman', serif";
 
-function linkHref(value: string) {
-  const trimmed = value.trim();
+function linkHref(value: string | undefined) {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return "/contact";
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
   return `https://${trimmed}`;
 }
@@ -36,6 +38,15 @@ function placeCard(place: PublicPlace) {
 }
 
 export default async function Home() {
+  try {
+    return await HomeContent();
+  } catch (error) {
+    console.error(error);
+    return <DatabaseNotice />;
+  }
+}
+
+async function HomeContent() {
   const [food, events, directory, featured] = await Promise.all([
     listSiteSponsors("food-and-drink"),
     listSiteSponsors("events"),

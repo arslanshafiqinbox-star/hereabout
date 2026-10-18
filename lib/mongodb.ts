@@ -109,6 +109,18 @@ function createClientPromise(): Promise<MongoClient> {
   return client.connect();
 }
 
+async function ensureIndex(
+  collection: Collection,
+  keys: Record<string, 1>,
+  options: { unique: true; partialFilterExpression: Record<string, unknown> },
+) {
+  try {
+    await collection.createIndex(keys, options);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 function getClientPromise(): Promise<MongoClient> {
   // Always cache on the global — required for Vercel warm serverless reuse
   if (!global._mongoClientPromise) {
@@ -220,10 +232,7 @@ export async function getAdminPlacesCollection(): Promise<Collection<AdminPlaceD
   const db = await getDb();
   const collection = db.collection<AdminPlaceDoc>("place");
   await collection.createIndex({ name: 1 });
-  await collection.createIndex(
-    { featured: 1 },
-    { unique: true, partialFilterExpression: { featured: true } },
-  );
+  await ensureIndex(collection, { featured: 1 }, { unique: true, partialFilterExpression: { featured: true } });
   return collection;
 }
 
@@ -284,7 +293,8 @@ export async function getSiteAdvertisementsCollection(): Promise<Collection<Site
   const db = await getDb();
   const collection = db.collection<SiteAdvertisementDoc>("site_advertisement");
   await collection.createIndex({ section: 1, title: 1 });
-  await collection.createIndex(
+  await ensureIndex(
+    collection,
     { section: 1 },
     { unique: true, partialFilterExpression: { kind: "main", archived: false } },
   );

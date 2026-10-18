@@ -1,6 +1,5 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
-import type { UserRole } from "@/lib/mongodb";
 
 export const ADMIN_COOKIE = "hereabouts_admin";
 const MAX_AGE = 60 * 60 * 24 * 7;
@@ -9,7 +8,7 @@ export type AdminToken = {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: "admin" | "editor";
   exp: number;
 };
 

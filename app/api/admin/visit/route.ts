@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   if (!session) return jsonError("Sign in required.", 401);
   const body = (await request.json().catch(() => null)) as VisitInput | null;
   const parsed = await readVisit(body);
-  if ("error" in parsed) return jsonError(parsed.error, 400);
+  if ("error" in parsed) return jsonError(parsed.error ?? "Could not save that visit.", 400);
   const visits = await getPlaceVisitsCollection();
   const result = await visits.insertOne(parsed.visit);
   return NextResponse.json({ id: String(result.insertedId) }, { status: 201 });
@@ -66,7 +66,7 @@ export async function PUT(request: Request) {
   const id = visitId(text(body?.id));
   if (!id) return jsonError("A valid visit id is required.", 400);
   const parsed = await readVisit(body);
-  if ("error" in parsed) return jsonError(parsed.error, 400);
+  if ("error" in parsed) return jsonError(parsed.error ?? "Could not save that visit.", 400);
   const visits = await getPlaceVisitsCollection();
   const result = await visits.updateOne({ _id: id }, { $set: parsed.visit });
   if (result.matchedCount === 0) return jsonError("That visit was not found.", 404);

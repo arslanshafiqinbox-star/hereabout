@@ -651,7 +651,7 @@ function VoteButton({
   label: string;
   pressed: boolean;
   onClick: () => void;
-  children: string;
+  children: ReactNode;
 }) {
   return (
     <button

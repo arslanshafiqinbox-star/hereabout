@@ -56,7 +56,7 @@ export async function POST(request: Request) {
   if (!session) return jsonError("Sign in required.", 401);
   const body = (await request.json().catch(() => null)) as AdvertisementInput | null;
   const parsed = await readAdvertisement(body);
-  if ("error" in parsed) return jsonError(parsed.error, 400);
+  if ("error" in parsed) return jsonError(parsed.error ?? "Could not save that advertisement.", 400);
   const ads = await getPlaceAdvertisementsCollection();
   const result = await ads.insertOne(parsed.advertisement);
   return NextResponse.json({ id: String(result.insertedId) }, { status: 201 });
@@ -69,7 +69,7 @@ export async function PUT(request: Request) {
   const id = recordId(text(body?.id));
   if (!id) return jsonError("A valid advertisement id is required.", 400);
   const parsed = await readAdvertisement(body);
-  if ("error" in parsed) return jsonError(parsed.error, 400);
+  if ("error" in parsed) return jsonError(parsed.error ?? "Could not save that advertisement.", 400);
   const ads = await getPlaceAdvertisementsCollection();
   const result = await ads.updateOne({ _id: id }, { $set: parsed.advertisement });
   if (result.matchedCount === 0) return jsonError("That advertisement was not found.", 404);

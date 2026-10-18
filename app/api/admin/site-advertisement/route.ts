@@ -75,7 +75,7 @@ export async function POST(request: Request) {
   if (!session) return jsonError("Sign in required.", 401);
   const body = (await request.json().catch(() => null)) as AdvertisementInput | null;
   const parsed = readAdvertisement(body);
-  if ("error" in parsed) return jsonError(parsed.error, 400);
+  if ("error" in parsed) return jsonError(parsed.error ?? "Could not save that advertisement.", 400);
   if (parsed.advertisement.kind === "main" && (await mainAlreadyActive(parsed.advertisement.section))) {
     return jsonError("Archive the current main sponsor before adding another.", 409);
   }
@@ -91,7 +91,7 @@ export async function PUT(request: Request) {
   const id = recordId(text(body?.id));
   if (!id) return jsonError("A valid advertisement id is required.", 400);
   const parsed = readAdvertisement(body);
-  if ("error" in parsed) return jsonError(parsed.error, 400);
+  if ("error" in parsed) return jsonError(parsed.error ?? "Could not save that advertisement.", 400);
   if (parsed.advertisement.kind === "main" && (await mainAlreadyActive(parsed.advertisement.section, id))) {
     return jsonError("Archive the current main sponsor before adding another.", 409);
   }

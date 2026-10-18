@@ -119,7 +119,7 @@ export async function POST(request: Request) {
   if (!session) return jsonError("Sign in required.", 401);
   const body = (await request.json().catch(() => null)) as PlaceInput | null;
   const parsed = await readPlace(body);
-  if ("error" in parsed) return jsonError(parsed.error, 400);
+  if ("error" in parsed) return jsonError(parsed.error ?? "Could not save that place.", 400);
   const places = await getAdminPlacesCollection();
   const result = await places.insertOne({ ...parsed.place, featured: false });
   return NextResponse.json({ id: String(result.insertedId) }, { status: 201 });
@@ -132,7 +132,7 @@ export async function PUT(request: Request) {
   const id = placeId(text(body?.id));
   if (!id) return jsonError("A valid place id is required.", 400);
   const parsed = await readPlace(body);
-  if ("error" in parsed) return jsonError(parsed.error, 400);
+  if ("error" in parsed) return jsonError(parsed.error ?? "Could not save that place.", 400);
   const places = await getAdminPlacesCollection();
   const result = await places.updateOne({ _id: id }, { $set: parsed.place });
   if (result.matchedCount === 0) return jsonError("That place was not found.", 404);

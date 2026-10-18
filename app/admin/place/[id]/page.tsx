@@ -37,6 +37,7 @@ export default async function EditPlacePage({ params }: { params: Promise<{ id: 
     comment_to_be_displayed: place.comment_to_be_displayed,
     primary_des: place.primary_des ?? "",
     secondary_des: place.secondary_des ?? "",
+    featured: place.featured === true,
   };
 
   return <PlaceForm place={row} types={types} counties={counties} regions={regions} />;

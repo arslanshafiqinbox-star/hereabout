@@ -1,0 +1,18 @@
+import { ObjectId } from "mongodb";
+import { NextResponse } from "next/server";
+import { getCommentRepliesCollection } from "@/lib/mongodb";
+
+export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+  if (!/^[a-f0-9]{24}$/i.test(id)) {
+    return NextResponse.json({ message: "A valid reply id is required." }, { status: 400 });
+  }
+  const replies = await getCommentRepliesCollection();
+  const updated = await replies.findOneAndUpdate(
+    { _id: new ObjectId(id) },
+    { $inc: { downcount: 1 } },
+    { returnDocument: "after" },
+  );
+  if (!updated) return NextResponse.json({ message: "That reply was not found." }, { status: 404 });
+  return NextResponse.json({ id, upcount: updated.upcount, downcount: updated.downcount });
+}

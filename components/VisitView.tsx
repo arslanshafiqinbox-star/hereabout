@@ -423,7 +423,7 @@ function ScoreBar({ score }: { score: number }) {
 
 function AdStrip({ ads }: { ads: PlaceSectionAd[] }) {
   return (
-    <div className="border-b-2 border-black">
+    <div className="border-t-2 border-b-2 border-black">
       {ads.map((ad) => (
         <article key={ad.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b-2 border-black px-4 py-3 last:border-b-0 sm:px-5">
           <p

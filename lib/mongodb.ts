@@ -208,6 +208,7 @@ export type AdminPlaceDoc = {
   local_authority: string;
   closest_station: string;
   closest_station_location: string;
+  video?: string;
   score: PlaceScoreDoc;
   our_take: string;
   comment_to_be_displayed: string;
@@ -241,6 +242,13 @@ export type PlaceVisitDoc = {
   activity: string;
   time: string;
   cost: string;
+  article?: string;
+  best_time?: string;
+  go_if?: string[];
+  skip_if?: string[];
+  video?: string;
+  closest_station?: string;
+  closest_station_location?: string;
 };
 
 export async function getPlaceVisitsCollection(): Promise<Collection<PlaceVisitDoc>> {
@@ -260,12 +268,14 @@ export type PlaceAdvertisementDoc = {
   date: string;
   section: string;
   place_id: string;
+  visit_id?: string;
 };
 
 export async function getPlaceAdvertisementsCollection(): Promise<Collection<PlaceAdvertisementDoc>> {
   const db = await getDb();
   const collection = db.collection<PlaceAdvertisementDoc>("place_advertisement");
   await collection.createIndex({ place_id: 1, title: 1 });
+  await collection.createIndex({ visit_id: 1, title: 1 });
   return collection;
 }
 
@@ -314,6 +324,7 @@ export type PlaceCommentDoc = {
   overall: number;
   comment: string;
   place_id: string;
+  visit_id?: string;
   approval: boolean;
   upcount: number;
   downcount: number;
@@ -329,6 +340,7 @@ export async function getPlaceCommentsCollection(): Promise<Collection<PlaceComm
   const db = await getDb();
   const collection = db.collection<PlaceCommentDoc>("place_comment");
   await collection.createIndex({ place_id: 1, created_at: -1 });
+  await collection.createIndex({ visit_id: 1, created_at: -1 });
   return collection;
 }
 
@@ -619,6 +631,11 @@ export type ContactQueryDoc = {
   business_email: string;
   subject: string;
   message: string;
+  your_name?: string;
+  business_type?: string;
+  place?: string;
+  consent?: boolean;
+  kind?: "contact" | "advertise";
   answered: boolean;
   created_at: Date;
   updated_at: Date;

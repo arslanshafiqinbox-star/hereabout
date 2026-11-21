@@ -70,6 +70,7 @@ export default function PlaceView({
           tags: [],
           placeName: visit.place_name || place.name,
           county: visit.county || place.county,
+          placeId: visit.place_id || placeId,
           mapUrl: visit.location,
         }))
       : visitsFor(place.name).map((visit) => ({ ...visit, placeName: place.name, county: place.county }));
@@ -208,7 +209,7 @@ export default function PlaceView({
         </aside>
 
         <div className="border-b-2 border-black px-5 py-6 sm:px-8 lg:border-r-2 lg:border-b-0 lg:py-8">
-          <div className="max-w-[40rem] space-y-4 text-[16px] leading-relaxed" style={{ fontFamily: sans }}>
+          <div className="space-y-4 text-[16px] leading-relaxed" style={{ fontFamily: sans }}>
             {featured ? (
               <>
                 <p>
@@ -221,7 +222,7 @@ export default function PlaceView({
               <p>{place.summary}</p>
             )}
           </div>
-          <div className="mt-6 max-w-[40rem] border border-black px-4 py-3">
+          <div className="mt-6 border border-black px-4 py-3">
             <p
               className="text-[11px] uppercase tracking-[0.12em]"
               style={{ fontFamily: mono, fontWeight: 500 }}
@@ -236,13 +237,13 @@ export default function PlaceView({
           </div>
           {featured ? (
             <>
-              <p className="mt-6 max-w-[40rem] text-[16px] leading-relaxed" style={{ fontFamily: sans }}>
+              <p className="mt-6 text-[16px] leading-relaxed" style={{ fontFamily: sans }}>
                 Readers rate Alnmouth highest for walks (4.9) and lowest for character (4.2). The
                 score comes from 118 verdicts, and the comments will show you exactly where they
                 disagree.
               </p>
               <blockquote
-                className="mt-8 max-w-[36rem] text-[clamp(1.7rem,3vw,2.4rem)] leading-[1.05] tracking-[-0.03em]"
+                className="mt-8 text-[clamp(1.7rem,3vw,2.4rem)] leading-[1.05] tracking-[-0.03em]"
                 style={{ fontFamily: sans, fontWeight: 800 }}
               >
                 “Live nearby. Go for “The beach walk to Warkworth” and let the rest of the day
@@ -256,6 +257,7 @@ export default function PlaceView({
               </p>
             </>
           ) : null}
+          <VideoEmbed link={place.video ?? ""} />
         </div>
 
         <aside className="px-4 py-6">
@@ -396,6 +398,29 @@ export default function PlaceView({
   );
 }
 
+function VideoEmbed({ link }: { link: string }) {
+  const embed = embedSrc(link);
+  if (!embed) return null;
+  return (
+    <section className="mx-auto mt-8 max-w-[40rem] text-center">
+      <p className="text-[11px] uppercase tracking-[0.12em]" style={{ fontFamily: mono, fontWeight: 500 }}>
+        Video
+      </p>
+      <iframe title="Place video" src={embed} className="mt-3 aspect-video w-full border-2 border-black" allow="fullscreen" />
+    </section>
+  );
+}
+
+function embedSrc(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const youtube = trimmed.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{6,})/i);
+  if (youtube) return `https://www.youtube.com/embed/${youtube[1]}`;
+  const vimeo = trimmed.match(/vimeo\.com\/(\d+)/i);
+  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
+  return "";
+}
+
 function matchesVisit(visit: ListedVisit, filter: string) {
   if (filter === "All") return true;
   if (visit.tags.includes(filter)) return true;
@@ -481,7 +506,7 @@ function MiniAd({
   return (
     <article className="border border-black">
       <div
-        className="flex items-center justify-between bg-[#FFE14A] px-3 py-1 text-[10px] uppercase tracking-[0.1em]"
+        className="flex items-center justify-between border-b-2 border-black bg-[#FFE14A] px-3 py-1 text-[10px] uppercase tracking-[0.1em]"
         style={{ fontFamily: mono, fontWeight: 500 }}
       >
         <span>Advertisement</span>
@@ -489,7 +514,7 @@ function MiniAd({
           {category} · {place}
         </span>
       </div>
-      <div className="px-3 py-3">
+      <div className="bg-white px-3 py-3">
         <h3 className="text-[1.45rem] leading-none tracking-[-0.03em]" style={{ fontFamily: sans, fontWeight: 800 }}>
           {title}
         </h3>
@@ -535,13 +560,13 @@ function AdBand({
         {cards.map((card) => (
           <article key={card.id} className="flex flex-col border-b border-black lg:border-r lg:border-b-0">
             <p
-              className="flex items-center justify-between bg-[#FFE14A] px-4 py-1.5 text-[10px] uppercase tracking-[0.1em]"
+              className="flex items-center justify-between border-b-2 border-black bg-[#FFE14A] px-4 py-1.5 text-[10px] uppercase tracking-[0.1em]"
               style={{ fontFamily: mono, fontWeight: 500 }}
             >
               <span>Advertisement</span>
               <span>{card.kind}</span>
             </p>
-            <div className="flex flex-1 flex-col px-4 py-4">
+            <div className="flex flex-1 flex-col bg-white px-4 py-4">
               <h3 className="text-[1.6rem] leading-none tracking-[-0.03em]" style={{ fontFamily: sans, fontWeight: 800 }}>
                 {card.title}
               </h3>
@@ -581,7 +606,7 @@ function AdBand({
               {pitch}
             </p>
             <Link
-              href="/contact"
+              href="/advertise"
               className="mt-4 self-start border border-white px-3 py-1.5 text-[14px]"
               style={{ fontFamily: sans }}
             >

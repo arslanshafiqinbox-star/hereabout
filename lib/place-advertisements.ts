@@ -24,8 +24,18 @@ function serialize(doc: PlaceAdvertisementDoc): PlaceSectionAd {
   };
 }
 
+const placeOnly = {
+  $or: [{ visit_id: { $exists: false } }, { visit_id: "" }],
+};
+
 export async function listPlaceAdvertisements(placeId: string) {
   const ads = await getPlaceAdvertisementsCollection();
-  const docs = await ads.find({ place_id: placeId }).sort({ title: 1 }).toArray();
+  const docs = await ads.find({ place_id: placeId, ...placeOnly }).sort({ title: 1 }).toArray();
+  return docs.map(serialize);
+}
+
+export async function listVisitAdvertisements(placeId: string, visitId: string) {
+  const ads = await getPlaceAdvertisementsCollection();
+  const docs = await ads.find({ place_id: placeId, visit_id: visitId }).sort({ title: 1 }).toArray();
   return docs.map(serialize);
 }

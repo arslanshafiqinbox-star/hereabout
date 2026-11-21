@@ -15,6 +15,7 @@ function mapLink(location: string | undefined, fallback: string) {
 
 export default function VisitRow({ visit, letter }: { visit: ListedVisit; letter: string }) {
   const mapHref = mapLink(visit.mapUrl, `${visit.title}, ${visit.placeName}`);
+  const articleHref = `/place/${visit.placeId || placeSlug(visit.placeName)}/visit/${visit.id || placeSlug(visit.title)}`;
 
   return (
     <article className="grid grid-cols-[2.5rem_minmax(0,1fr)] border-b-2 border-black lg:grid-cols-[3.5rem_minmax(0,1.7fr)_12rem_9rem_8rem_6.5rem]">
@@ -30,7 +31,9 @@ export default function VisitRow({ visit, letter }: { visit: ListedVisit; letter
             className="text-[1.25rem] leading-none tracking-[-0.03em] break-words sm:text-[1.35rem]"
             style={{ fontFamily: sans, fontWeight: 800 }}
           >
-            {visit.title}
+            <Link href={articleHref} className="underline">
+              {visit.title}
+            </Link>
           </h3>
           <p
             className="mt-1.5 max-w-[36rem] text-[15px] leading-snug"
@@ -38,15 +41,24 @@ export default function VisitRow({ visit, letter }: { visit: ListedVisit; letter
           >
             {visit.text}
           </p>
-          <a
-            href={mapHref}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 inline-flex items-center gap-1 text-[14px] underline"
-            style={{ fontFamily: sans }}
-          >
-            Map <span aria-hidden="true">↗</span>
-          </a>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+            <Link
+              href={articleHref}
+              className="text-[13px] leading-none underline decoration-1 underline-offset-[3px]"
+              style={{ fontFamily: sans, fontWeight: 600 }}
+            >
+              Read the article
+            </Link>
+            <a
+              href={mapHref}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[13px] leading-none underline decoration-1 underline-offset-[3px]"
+              style={{ fontFamily: sans, fontWeight: 600 }}
+            >
+              Map <span aria-hidden="true">↗</span>
+            </a>
+          </div>
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] lg:hidden" style={{ fontFamily: sans }}>
             <Link
               href={`/place/${visit.placeId || placeSlug(visit.placeName)}`}

@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { QueryKind } from "@/lib/contact-query";
 
 const sans = "var(--font-bricolage), system-ui, sans-serif";
 const mono = "var(--font-plex-mono), ui-monospace, monospace";
@@ -9,8 +10,11 @@ const mono = "var(--font-plex-mono), ui-monospace, monospace";
 export type ContactQueryRow = {
   id: string;
   businessName: string;
+  yourName: string;
   businessEmail: string;
   subject: string;
+  businessType: string;
+  place: string;
   message: string;
   answered: boolean;
   when: string;
@@ -18,7 +22,7 @@ export type ContactQueryRow = {
 
 type DialogState = { mode: "create" } | { mode: "edit"; row: ContactQueryRow } | null;
 
-export function ContactQueryManager({ rows }: { rows: ContactQueryRow[] }) {
+export function ContactQueryManager({ rows, kind }: { rows: ContactQueryRow[]; kind: QueryKind }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
@@ -28,6 +32,11 @@ export function ContactQueryManager({ rows }: { rows: ContactQueryRow[] }) {
   const unanswered = rows.filter((row) => !row.answered);
   const answered = rows.filter((row) => row.answered);
   const visible = tab === "answered" ? answered : unanswered;
+  const contact = kind === "contact";
+  const noun = contact ? "message" : "enquiry";
+  const headings = contact
+    ? ["Name", "Email", "About", "Place", "Message", "When", "Answered", ""]
+    : ["Business", "Your name", "Email", "Type", "Place", "Message", "When", "Answered", ""];
 
   useEffect(() => {
     if (!dialog) return;
@@ -57,18 +66,59 @@ export function ContactQueryManager({ rows }: { rows: ContactQueryRow[] }) {
     return true;
   }
 
+  function fields(row: ContactQueryRow, answeredValue: boolean) {
+    return {
+      id: row.id,
+      kind,
+      business_name: row.businessName,
+      your_name: row.yourName,
+      business_email: row.businessEmail,
+      business_type: row.businessType,
+      place: row.place,
+      subject: row.subject,
+      message: row.message,
+      answered: answeredValue,
+    };
+  }
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const payload = {
+    const answeredValue = data.get("answered") === "on";
+    const place = String(data.get("place") ?? "");
+    const topic = String(data.get("business_type") ?? "");
+    const text = String(data.get("message") ?? "");
+    const email = String(data.get("business_email") ?? "");
+    if (contact) {
+      const name = String(data.get("your_name") ?? "");
+      await send(editing ? "PUT" : "POST", {
+        id: editing?.id ?? "",
+        kind,
+        business_name: name,
+        your_name: name,
+        business_email: email,
+        business_type: topic,
+        place,
+        subject: [topic, place].filter(Boolean).join(" · "),
+        message: text,
+        answered: answeredValue,
+      });
+      return;
+    }
+    const businessName = String(data.get("business_name") ?? "");
+    const yourName = String(data.get("your_name") ?? "");
+    await send(editing ? "PUT" : "POST", {
       id: editing?.id ?? "",
-      business_name: String(data.get("business_name") ?? ""),
-      business_email: String(data.get("business_email") ?? ""),
-      subject: String(data.get("subject") ?? ""),
-      message: String(data.get("message") ?? ""),
-      answered: data.get("answered") === "on",
-    };
-    await send(editing ? "PUT" : "POST", payload);
+      kind,
+      business_name: businessName,
+      your_name: yourName,
+      business_email: email,
+      business_type: topic,
+      place,
+      subject: [topic, place].filter(Boolean).join(" · "),
+      message: text,
+      answered: answeredValue,
+    });
   }
 
   return (
@@ -76,10 +126,10 @@ export function ContactQueryManager({ rows }: { rows: ContactQueryRow[] }) {
       <div className="flex flex-wrap items-end justify-between gap-6">
         <div>
           <p className="text-[11px] uppercase tracking-[0.18em]" style={{ fontFamily: mono }}>
-            {visible.length} {visible.length === 1 ? "query" : "queries"}
+            {visible.length} {visible.length === 1 ? noun : `${noun}s`}
           </p>
           <h1 className="mt-2 text-5xl leading-none tracking-[-0.04em]" style={{ fontFamily: sans, fontWeight: 560 }}>
-            Contact
+            {contact ? "Contact" : "Advertise with us"}
           </h1>
           <div className="mt-5 flex w-fit border-2 border-black" role="tablist" aria-label="Query status">
             {(
@@ -123,10 +173,10 @@ export function ContactQueryManager({ rows }: { rows: ContactQueryRow[] }) {
       ) : null}
 
       <div className="mt-8 overflow-x-auto border-2 border-black">
-        <table className="w-full min-w-[64rem] border-collapse text-left">
+        <table className="w-full min-w-[72rem] border-collapse text-left">
           <thead>
             <tr className="border-b-2 border-black bg-neutral-50">
-              {["Business name", "Business email", "Subject", "Message", "When", "Answered", ""].map((heading) => (
+              {headings.map((heading) => (
                 <th
                   key={heading || "actions"}
                   className="border-r-2 border-black px-4 py-3 text-[11px] uppercase tracking-[0.14em] last:border-r-0"
@@ -140,21 +190,39 @@ export function ContactQueryManager({ rows }: { rows: ContactQueryRow[] }) {
           <tbody>
             {visible.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-sm" style={{ fontFamily: sans }}>
-                  {rows.length === 0 ? "No queries yet." : tab === "answered" ? "No answered queries." : "No unanswered queries."}
+                <td colSpan={headings.length} className="px-4 py-6 text-sm" style={{ fontFamily: sans }}>
+                  {rows.length === 0
+                    ? `No ${noun}s yet.`
+                    : tab === "answered"
+                      ? `No answered ${noun}s.`
+                      : `No unanswered ${noun}s.`}
                 </td>
               </tr>
             ) : (
               visible.map((row) => (
                 <tr key={row.id} className="border-b-2 border-black align-top last:border-b-0">
-                  <td className="border-r-2 border-black px-4 py-3" style={{ fontFamily: sans, fontWeight: 600 }}>
-                    {row.businessName}
-                  </td>
+                  {contact ? (
+                    <td className="border-r-2 border-black px-4 py-3" style={{ fontFamily: sans, fontWeight: 600 }}>
+                      {row.yourName || row.businessName}
+                    </td>
+                  ) : (
+                    <>
+                      <td className="border-r-2 border-black px-4 py-3" style={{ fontFamily: sans, fontWeight: 600 }}>
+                        {row.businessName}
+                      </td>
+                      <td className="border-r-2 border-black px-4 py-3" style={{ fontFamily: sans }}>
+                        {row.yourName}
+                      </td>
+                    </>
+                  )}
                   <td className="border-r-2 border-black px-4 py-3" style={{ fontFamily: sans }}>
                     {row.businessEmail}
                   </td>
                   <td className="border-r-2 border-black px-4 py-3" style={{ fontFamily: sans }}>
-                    {row.subject}
+                    {row.businessType || row.subject}
+                  </td>
+                  <td className="border-r-2 border-black px-4 py-3" style={{ fontFamily: sans }}>
+                    {row.place || "—"}
                   </td>
                   <td className="max-w-md border-r-2 border-black px-4 py-3 whitespace-pre-wrap" style={{ fontFamily: sans }}>
                     {row.message}
@@ -169,19 +237,7 @@ export function ContactQueryManager({ rows }: { rows: ContactQueryRow[] }) {
                     <button
                       type="button"
                       disabled={pending}
-                      onClick={() =>
-                        send(
-                          "PUT",
-                          {
-                            id: row.id,
-                            business_name: row.businessName,
-                            business_email: row.businessEmail,
-                            subject: row.subject,
-                            message: row.message,
-                            answered: !row.answered,
-                          },
-                        )
-                      }
+                      onClick={() => send("PUT", fields(row, !row.answered))}
                       className="mr-4 text-[11px] uppercase tracking-[0.14em] underline disabled:opacity-50"
                       style={{ fontFamily: mono }}
                     >
@@ -224,12 +280,20 @@ export function ContactQueryManager({ rows }: { rows: ContactQueryRow[] }) {
             onClick={(event) => event.stopPropagation()}
           >
             <h2 id="contact-dialog-title" className="text-3xl tracking-[-0.04em]" style={{ fontFamily: sans, fontWeight: 560 }}>
-              {editing ? "Edit query" : "Add query"}
+              {editing ? `Edit ${noun}` : `Add ${noun}`}
             </h2>
             <form key={editing?.id ?? "create"} onSubmit={onSubmit} className="mt-6 grid gap-4">
-              <Field label="Business name" name="business_name" defaultValue={editing?.businessName} />
-              <Field label="Business email" name="business_email" type="email" defaultValue={editing?.businessEmail} />
-              <Field label="Subject" name="subject" defaultValue={editing?.subject} />
+              {contact ? (
+                <Field label="Your name" name="your_name" defaultValue={editing?.yourName || editing?.businessName} />
+              ) : (
+                <>
+                  <Field label="Business name" name="business_name" defaultValue={editing?.businessName} />
+                  <Field label="Your name" name="your_name" defaultValue={editing?.yourName} />
+                </>
+              )}
+              <Field label="Email" name="business_email" type="email" defaultValue={editing?.businessEmail} />
+              <Field label={contact ? "What is it about?" : "Type of business"} name="business_type" defaultValue={editing?.businessType} />
+              <Field label="Place" name="place" required={false} defaultValue={editing?.place} />
               <label className="block">
                 <span className="text-[11px] uppercase tracking-[0.16em]" style={{ fontFamily: mono }}>
                   Message
@@ -244,12 +308,7 @@ export function ContactQueryManager({ rows }: { rows: ContactQueryRow[] }) {
                 />
               </label>
               <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  name="answered"
-                  defaultChecked={editing?.answered === true}
-                  className="h-4 w-4 accent-black"
-                />
+                <input type="checkbox" name="answered" defaultChecked={editing?.answered === true} className="h-4 w-4 accent-black" />
                 <span className="text-[11px] uppercase tracking-[0.16em]" style={{ fontFamily: mono }}>
                   Answered
                 </span>
@@ -290,11 +349,13 @@ function Field({
   name,
   defaultValue,
   type = "text",
+  required = true,
 }: {
   label: string;
   name: string;
   defaultValue?: string;
   type?: string;
+  required?: boolean;
 }) {
   return (
     <label className="block">
@@ -302,7 +363,7 @@ function Field({
         {label}
       </span>
       <input
-        required
+        required={required}
         type={type}
         name={name}
         defaultValue={defaultValue}

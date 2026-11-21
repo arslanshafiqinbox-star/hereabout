@@ -54,6 +54,7 @@ export function PlaceForm({
         local_authority: String(data.get("local_authority") ?? ""),
         closest_station: String(data.get("closest_station") ?? ""),
         closest_station_location: String(data.get("closest_station_location") ?? ""),
+        video: String(data.get("video") ?? ""),
         score,
         our_take: String(data.get("our_take") ?? ""),
         comment_to_be_displayed: String(data.get("comment_to_be_displayed") ?? ""),
@@ -91,6 +92,7 @@ export function PlaceForm({
           <Field label="Local authority" name="local_authority" defaultValue={place?.local_authority} />
           <Field label="Closest station" name="closest_station" defaultValue={place?.closest_station} />
           <Field label="Closest station location" name="closest_station_location" defaultValue={place?.closest_station_location} />
+          <Field label="Video link" name="video" required={false} defaultValue={place?.video} />
           <fieldset>
             <legend className="text-[11px] uppercase tracking-[0.16em]" style={{ fontFamily: mono }}>
               Score
@@ -159,13 +161,23 @@ function Area({ label, name, defaultValue }: { label: string; name: string; defa
   );
 }
 
-function Field({ label, name, defaultValue }: { label: string; name: string; defaultValue?: string }) {
+function Field({
+  label,
+  name,
+  defaultValue,
+  required = true,
+}: {
+  label: string;
+  name: string;
+  defaultValue?: string;
+  required?: boolean;
+}) {
   return (
     <label className="block">
       <span className="text-[11px] uppercase tracking-[0.16em]" style={{ fontFamily: mono }}>
         {label}
       </span>
-      <input required name={name} defaultValue={defaultValue} className="mt-2 h-12 w-full border-2 border-black px-3 outline-none" style={{ fontFamily: sans }} />
+      <input required={required} name={name} defaultValue={defaultValue} className="mt-2 h-12 w-full border-2 border-black px-3 outline-none" style={{ fontFamily: sans }} />
     </label>
   );
 }

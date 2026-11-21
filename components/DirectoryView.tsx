@@ -379,7 +379,7 @@ export default function DirectoryView({
               Restaurants, cafés, hotels and B&Bs: reach people deciding where to go next.
             </p>
             <Link
-              href="/contact"
+              href="/advertise"
               className="mt-4 inline-block border border-white px-3 py-1.5 text-[14px] text-white hover:bg-white hover:text-black"
               style={{ fontFamily: sans, fontWeight: 500 }}
             >

@@ -36,7 +36,10 @@ export default async function PlaceCommentsPage({ params }: { params: Promise<{ 
   if (!place) notFound();
 
   const comments = await getPlaceCommentsCollection();
-  const docs = await comments.find({ place_id: id }).sort({ created_at: -1 }).toArray();
+  const docs = await comments
+    .find({ place_id: id, $or: [{ visit_id: { $exists: false } }, { visit_id: "" }] })
+    .sort({ created_at: -1 })
+    .toArray();
   const replies = await getCommentRepliesCollection();
   const replyDocs = await replies
     .find({ comment_id: { $in: docs.map((doc) => String(doc._id)) } })

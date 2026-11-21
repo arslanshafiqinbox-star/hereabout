@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/admin-auth";
-import { getAdminPlacesCollection, getPlaceAdvertisementsCollection } from "@/lib/mongodb";
+import { getAdminPlacesCollection, getPlaceAdvertisementsCollection, getPlaceVisitsCollection } from "@/lib/mongodb";
 
 type AdvertisementInput = {
   id?: string;
@@ -13,6 +13,7 @@ type AdvertisementInput = {
   date?: string;
   section?: string;
   place_id?: string;
+  visit_id?: string;
 };
 
 function jsonError(message: string, status: number) {
@@ -48,7 +49,26 @@ async function readAdvertisement(body: AdvertisementInput | null) {
   const places = await getAdminPlacesCollection();
   const place = await places.findOne({ _id: new ObjectId(place_id) });
   if (!place) return { error: "Choose a place that exists." };
-  return { advertisement: { provider, title, tagline, action, link, date, section, place_id } };
+  const visit_id = text(body?.visit_id);
+  if (visit_id) {
+    if (!recordId(visit_id)) return { error: "Choose a place to visit that exists." };
+    const visits = await getPlaceVisitsCollection();
+    const visit = await visits.findOne({ _id: new ObjectId(visit_id), place_id });
+    if (!visit) return { error: "Choose a place to visit that exists." };
+  }
+  return {
+    advertisement: {
+      provider,
+      title,
+      tagline,
+      action,
+      link,
+      date,
+      section,
+      place_id,
+      ...(visit_id ? { visit_id } : {}),
+    },
+  };
 }
 
 export async function POST(request: Request) {

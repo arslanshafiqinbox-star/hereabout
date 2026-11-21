@@ -30,6 +30,7 @@ export type PlaceRow = {
   local_authority: string;
   closest_station: string;
   closest_station_location: string;
+  video: string;
   score: PlaceScore;
   our_take: string;
   comment_to_be_displayed: string;

@@ -5,6 +5,7 @@ import {
   commentOverall,
   getCommentRepliesCollection,
   getPlaceCommentsCollection,
+  getPlaceVisitsCollection,
   type CommentRatingsDoc,
   type PlaceCommentDoc,
 } from "@/lib/mongodb";
@@ -13,6 +14,7 @@ type CommentInput = {
   user_type?: string;
   comment?: string;
   place_id?: string;
+  visit_id?: string;
   approval?: boolean;
   ratings?: Partial<CommentRatingsDoc>;
 };
@@ -97,6 +99,13 @@ export async function POST(request: Request) {
   const places = await getAdminPlacesCollection();
   const place = await places.findOne({ _id: new ObjectId(place_id) });
   if (!place) return jsonError("Choose a place that exists.", 404);
+  const visit_id = text(body?.visit_id);
+  if (visit_id) {
+    if (!/^[a-f0-9]{24}$/i.test(visit_id)) return jsonError("Choose a place to visit that exists.", 400);
+    const visits = await getPlaceVisitsCollection();
+    const visit = await visits.findOne({ _id: new ObjectId(visit_id), place_id });
+    if (!visit) return jsonError("Choose a place to visit that exists.", 404);
+  }
 
   const comments = await getPlaceCommentsCollection();
   const doc: PlaceCommentDoc = {
@@ -105,6 +114,7 @@ export async function POST(request: Request) {
     overall: commentOverall(ratings),
     comment,
     place_id,
+    ...(visit_id ? { visit_id } : {}),
     approval: body?.approval === true,
     upcount: 0,
     downcount: 0,

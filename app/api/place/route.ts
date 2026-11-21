@@ -12,6 +12,7 @@ function serialize(doc: AdminPlaceDoc) {
     local_authority: doc.local_authority,
     closest_station: doc.closest_station,
     closest_station_location: doc.closest_station_location,
+    video: doc.video ?? "",
     score: doc.score,
     our_take: doc.our_take,
     comment_to_be_displayed: doc.comment_to_be_displayed,

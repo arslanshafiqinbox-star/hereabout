@@ -47,6 +47,7 @@ export async function listPublicPlaces(type?: PublicPlaceType): Promise<PublicPl
     region: named(regions, place.region_id),
     type: knownType(named(types, place.type_id)),
     score: overall(place.score),
+    video: place.video ?? "",
   }));
   return type ? rows.filter((place) => place.type === type) : rows;
 }
@@ -76,6 +77,7 @@ export async function findFeaturedPlace(): Promise<FeaturedPlace | null> {
     region: named(regions, places.region_id),
     type: knownType(named(types, places.type_id)),
     score: overall(places.score),
+    video: places.video ?? "",
     ourTake: places.our_take,
     comment: places.comment_to_be_displayed,
     primary: plain(places.primary_des),

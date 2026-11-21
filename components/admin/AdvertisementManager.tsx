@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PlaceTabs } from "@/components/admin/PlaceTabs";
+import { VisitTabs } from "@/components/admin/VisitTabs";
 
 const sans = "var(--font-bricolage), system-ui, sans-serif";
 const mono = "var(--font-plex-mono), ui-monospace, monospace";
@@ -37,10 +38,14 @@ export function AdvertisementManager({
   placeName,
   placeId,
   rows,
+  visitId,
+  visitName,
 }: {
   placeName: string;
   placeId: string;
   rows: AdvertisementRow[];
+  visitId?: string;
+  visitName?: string;
 }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
@@ -86,6 +91,7 @@ export function AdvertisementManager({
     await send(editing ? "PUT" : "POST", {
       id: editing?.id,
       place_id: editing?.place_id ?? placeId,
+      ...(visitId ? { visit_id: visitId } : {}),
       provider: String(data.get("provider") ?? ""),
       title: String(data.get("title") ?? ""),
       tagline: String(data.get("tagline") ?? ""),
@@ -103,9 +109,20 @@ export function AdvertisementManager({
           Place
         </Link>
         {" / "}
-        {placeName}
+        {visitId ? (
+          <Link href={`/admin/place/${placeId}/visits`} className="underline">
+            {placeName}
+          </Link>
+        ) : (
+          placeName
+        )}
+        {visitName ? ` / ${visitName}` : ""}
       </p>
-      <PlaceTabs placeId={placeId} active="advertisements" />
+      {visitId ? (
+        <VisitTabs placeId={placeId} visitId={visitId} active="advertisements" />
+      ) : (
+        <PlaceTabs placeId={placeId} active="advertisements" />
+      )}
       <div className="mt-6 flex items-end justify-between gap-6">
         <div>
           <p className="text-[11px] uppercase tracking-[0.18em]" style={{ fontFamily: mono }}>

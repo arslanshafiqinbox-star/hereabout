@@ -15,6 +15,14 @@ const ratingFields = [
   { key: "value", label: "Value" },
 ] as const;
 
+const visitRatingFields = [
+  { key: "character", label: "Setting" },
+  { key: "value", label: "Value" },
+  { key: "food", label: "Family-friendliness" },
+  { key: "walks", label: "Peace and quiet" },
+  { key: "getting", label: "Worth the trip" },
+] as const;
+
 type RatingKey = (typeof ratingFields)[number]["key"];
 
 const roles = ["Someone who lives here", "Someone who has visited", "A day-tripper"];
@@ -84,6 +92,11 @@ function WhoYouAre({
   );
 }
 
+function belongsToThis(comment: PublicComment, placeId?: string, visitId?: string) {
+  if (!placeId || comment.place_id !== placeId || !comment.approval) return false;
+  return visitId ? comment.visit_id === visitId : !comment.visit_id;
+}
+
 function badgeFor(role: string, visits: VisitCount) {
   if (role === "Someone who lives here") return "Lives here";
   if (role === "A day-tripper") return "Day-tripper";
@@ -115,7 +128,7 @@ function formatWhen(value: string) {
   return months <= 1 ? "1 month ago" : `${months} months ago`;
 }
 
-function toThreads(comments: PublicComment[]): Thread[] {
+function toThreads(comments: PublicComment[], forVisit = false): Thread[] {
   return comments.map((comment) => ({
     id: comment.id,
     kind: "comment",
@@ -125,13 +138,21 @@ function toThreads(comments: PublicComment[]): Thread[] {
     createdAt: new Date(comment.created_at).getTime(),
     score: comment.overall,
     ratings: comment.ratings
-      ? [
-          { label: "Character", value: comment.ratings.character },
-          { label: "Food & drink", value: comment.ratings.food_drink },
-          { label: "Walks", value: comment.ratings.walks },
-          { label: "Getting around", value: comment.ratings.getting_around },
-          { label: "Value", value: comment.ratings.value },
-        ]
+      ? forVisit
+        ? [
+            { label: "Setting", value: comment.ratings.character },
+            { label: "Value", value: comment.ratings.value },
+            { label: "Family-friendliness", value: comment.ratings.food_drink },
+            { label: "Peace and quiet", value: comment.ratings.walks },
+            { label: "Worth the trip", value: comment.ratings.getting_around },
+          ]
+        : [
+            { label: "Character", value: comment.ratings.character },
+            { label: "Food & drink", value: comment.ratings.food_drink },
+            { label: "Walks", value: comment.ratings.walks },
+            { label: "Getting around", value: comment.ratings.getting_around },
+            { label: "Value", value: comment.ratings.value },
+          ]
       : undefined,
     body: comment.comment,
     up: comment.upcount,
@@ -166,9 +187,11 @@ function flattenReplies(list: Thread[]): Thread[] {
 export default function PlaceComments({
   placeName,
   placeId,
+  visitId,
 }: {
   placeName: string;
   placeId?: string;
+  visitId?: string;
 }) {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [sort, setSort] = useState<"top" | "newest">("top");
@@ -183,6 +206,7 @@ export default function PlaceComments({
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyDraft, setReplyDraft] = useState("");
   const [message, setMessage] = useState("");
+  const [review, setReview] = useState(false);
 
   useEffect(() => {
     if (!placeId) return;
@@ -191,8 +215,8 @@ export default function PlaceComments({
       .then((response) => response.json())
       .then((body: { comments?: PublicComment[] }) => {
         if (!active) return;
-        const mine = (body.comments ?? []).filter((comment) => comment.place_id === placeId && comment.approval);
-        setThreads(toThreads(mine));
+        const mine = (body.comments ?? []).filter((comment) => belongsToThis(comment, placeId, visitId));
+        setThreads(toThreads(mine, Boolean(visitId)));
       })
       .catch(() => {
         if (active) setMessage("Could not load comments.");
@@ -200,14 +224,15 @@ export default function PlaceComments({
     return () => {
       active = false;
     };
-  }, [placeId]);
+  }, [placeId, visitId]);
 
-  const chosen = ratingFields
+  const fields = visitId ? visitRatingFields : ratingFields;
+  const chosen = fields
     .map((field) => ratings[field.key])
     .filter((value): value is number => value != null);
   const overall =
-    chosen.length === ratingFields.length
-      ? (chosen.reduce((sum, value) => sum + value, 0) / ratingFields.length).toFixed(1)
+    chosen.length === fields.length
+      ? (chosen.reduce((sum, value) => sum + value, 0) / fields.length).toFixed(1)
       : null;
 
   const visible = useMemo(() => {
@@ -226,8 +251,8 @@ export default function PlaceComments({
     if (!placeId) return;
     const response = await fetch("/api/comment/all");
     const body = (await response.json().catch(() => null)) as { comments?: PublicComment[] } | null;
-    const mine = (body?.comments ?? []).filter((comment) => comment.place_id === placeId && comment.approval);
-    setThreads(toThreads(mine));
+    const mine = (body?.comments ?? []).filter((comment) => belongsToThis(comment, placeId, visitId));
+    setThreads(toThreads(mine, Boolean(visitId)));
   }
 
   async function vote(id: string, direction: "up" | "down") {
@@ -272,6 +297,7 @@ export default function PlaceComments({
           body: JSON.stringify({
             user_type: badgeFor(role, visits),
             place_id: placeId,
+            ...(visitId ? { visit_id: visitId } : {}),
             comment: text,
             ratings: {
               character: ratings.character,
@@ -291,11 +317,16 @@ export default function PlaceComments({
       setOpenIds((current) => (current.includes(parent?.commentId ?? parentId) ? current : [...current, parent?.commentId ?? parentId]));
       setReplyTo(null);
       setReplyDraft("");
+      setReplyRole(roles[0]);
+      setReplyVisits("1");
     } else {
       setDraft("");
+      setRatings({});
+      setRole(roles[0]);
+      setVisits("1");
       setSort("newest");
     }
-    setMessage("Posted. It will show here once it is approved.");
+    setReview(true);
     await reload();
   }
 
@@ -388,7 +419,7 @@ export default function PlaceComments({
                 Your ratings
               </legend>
               <div className="mt-3 space-y-2.5">
-                {ratingFields.map((field) => (
+                {fields.map((field) => (
                   <div key={field.key} className="flex items-center justify-between gap-3">
                     <span className="max-w-[5.5rem] text-[14px] leading-tight" style={{ fontFamily: sans }}>
                       {field.label}
@@ -493,6 +524,40 @@ export default function PlaceComments({
           ))}
         </div>
       </div>
+      {review ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" onClick={() => setReview(false)}>
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="comment-review-title"
+            className="w-full max-w-lg border-2 border-black bg-[#FFD200] p-6 shadow-[12px_12px_0_0_#000] sm:p-8"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p className="text-[11px] uppercase tracking-[0.16em]" style={{ fontFamily: mono, fontWeight: 500 }}>
+              Comment
+            </p>
+            <h2
+              id="comment-review-title"
+              className="mt-3 text-[clamp(3.2rem,8vw,5rem)] leading-[0.82] tracking-[-0.05em]"
+              style={{ fontFamily: sans, fontWeight: 800 }}
+            >
+              In review.
+            </h2>
+            <p className="mt-4 max-w-sm text-[18px] leading-snug" style={{ fontFamily: sans }}>
+              Your comment is in review. It will show here once it is approved.
+            </p>
+            <button
+              type="button"
+              autoFocus
+              onClick={() => setReview(false)}
+              className="mt-8 bg-black px-5 py-3 text-[15px] text-white"
+              style={{ fontFamily: sans, fontWeight: 650 }}
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

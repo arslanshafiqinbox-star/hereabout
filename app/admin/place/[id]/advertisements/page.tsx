@@ -15,7 +15,10 @@ export default async function PlaceAdvertisementsPage({ params }: { params: Prom
   if (!place) notFound();
 
   const ads = await getPlaceAdvertisementsCollection();
-  const docs = await ads.find({ place_id: id }).sort({ date: -1 }).toArray();
+  const docs = await ads
+    .find({ place_id: id, $or: [{ visit_id: { $exists: false } }, { visit_id: "" }] })
+    .sort({ date: -1 })
+    .toArray();
   const rows: AdvertisementRow[] = docs.map((ad) => ({
     id: String(ad._id),
     provider: ad.provider,

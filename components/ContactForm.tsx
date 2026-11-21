@@ -6,13 +6,24 @@ const sans = "var(--font-bricolage), system-ui, -apple-system, 'Segoe UI', sans-
 const mono = "var(--font-plex-mono), ui-monospace, monospace";
 const serif = "var(--font-newsreader), Georgia, 'Times New Roman', serif";
 
-const reasons = [
-  { label: "01", title: "Advertise", text: "A strip, a card, or a place on the page beside the thing people are already reading." },
-  { label: "02", title: "A listing", text: "A village, town, city, or somewhere to visit that should be in the directory." },
-  { label: "03", title: "A correction", text: "A fact, a score, or a sentence that has gone out of date." },
+const steps = [
+  "Tell us about your business and where it is.",
+  "Choose a placement that suits you.",
+  "We label it as an advertisement and it goes live.",
 ];
 
-export default function ContactForm() {
+const businessTypes = [
+  "Restaurant or café",
+  "Hotel or B&B",
+  "Pub",
+  "Shop",
+  "Event",
+  "Holiday",
+  "Attraction",
+  "Other",
+];
+
+export default function ContactForm({ places }: { places: string[] }) {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
@@ -21,6 +32,8 @@ export default function ContactForm() {
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
+    const businessType = String(data.get("business_type") ?? "");
+    const place = String(data.get("place") ?? "");
     setPending(true);
     setMessage("");
     setSent(false);
@@ -29,9 +42,13 @@ export default function ContactForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         business_name: String(data.get("business_name") ?? ""),
+        your_name: String(data.get("your_name") ?? ""),
         business_email: String(data.get("business_email") ?? ""),
-        subject: String(data.get("subject") ?? ""),
+        business_type: businessType,
+        place,
+        subject: [businessType, place].filter(Boolean).join(" · "),
         message: String(data.get("message") ?? ""),
+        kind: "advertise",
       }),
     });
     const body = (await response.json().catch(() => null)) as { message?: string } | null;
@@ -54,20 +71,102 @@ export default function ContactForm() {
   }, [sent]);
 
   return (
-    <main className="border-t-2 border-black bg-white text-black">
-      <div
-        className="flex items-center justify-between gap-4 bg-black px-5 py-2.5 text-[11px] uppercase tracking-[0.14em] text-white sm:px-8"
-        style={{ fontFamily: mono, fontWeight: 500 }}
-      >
-        <p>For businesses</p>
-        <p className="hidden sm:block">Advertising · Listings · Corrections</p>
-      </div>
+    <main className="bg-white text-black">
+      <section className="px-5 py-14 sm:px-8 sm:py-20 lg:px-10 lg:py-24">
+        <p className="text-[11px] uppercase tracking-[0.16em]" style={{ fontFamily: mono, fontWeight: 500 }}>
+          For businesses
+        </p>
+        <h1
+          className="mt-6 max-w-[11ch] text-[clamp(3.4rem,11vw,7.4rem)] leading-[0.84] tracking-[-0.055em]"
+          style={{ fontFamily: sans, fontWeight: 800 }}
+        >
+          Advertise with Hereabouts
+        </h1>
+        <p
+          className="mt-8 max-w-[26rem] text-[clamp(1.35rem,2.4vw,1.85rem)] leading-[1.15]"
+          style={{ fontFamily: serif, fontStyle: "italic", fontWeight: 500 }}
+        >
+          Put your restaurant, hotel, event, holiday or attraction in front of people who are deciding where to go next.
+        </p>
+        <a
+          href="#enquiry"
+          className="mt-10 inline-block bg-black px-5 py-3 text-[16px] text-white"
+          style={{ fontFamily: sans, fontWeight: 650 }}
+        >
+          Get in touch
+        </a>
+      </section>
+
+      <section>
+        <div
+          className="flex items-center justify-between gap-4 bg-black px-5 py-2.5 text-[11px] uppercase tracking-[0.14em] text-white sm:px-8 lg:px-10"
+          style={{ fontFamily: mono, fontWeight: 500 }}
+        >
+          <p>How it works</p>
+          <p>Three steps</p>
+        </div>
+        <ol>
+          {steps.map((step, index) => (
+            <li key={step} className="grid grid-cols-[2.75rem_minmax(0,1fr)] items-center gap-3 border-b border-black px-5 py-3.5 sm:grid-cols-[3.6rem_minmax(0,1fr)] sm:gap-6 sm:px-8 sm:py-4 lg:px-10">
+              <span className="text-[2.15rem] leading-none tracking-[-0.045em] sm:text-[2.65rem]" style={{ fontFamily: sans, fontWeight: 720 }}>
+                {index + 1}
+              </span>
+              <p className="text-[1.05rem] leading-[1.15] tracking-[-0.02em] sm:text-[1.28rem]" style={{ fontFamily: sans, fontWeight: 520 }}>
+                {step}
+              </p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section id="enquiry" className="scroll-mt-24">
+        <div
+          className="bg-black px-5 py-2.5 text-[11px] uppercase tracking-[0.14em] text-white sm:px-8 lg:px-10"
+          style={{ fontFamily: mono, fontWeight: 500 }}
+        >
+          Get in touch
+        </div>
+        <form onSubmit={onSubmit} className="px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
+          <div className="grid gap-5 md:grid-cols-3">
+            <Field label="Business name" name="business_name" />
+            <Field label="Your name" name="your_name" />
+            <Field label="Email" name="business_email" type="email" />
+          </div>
+          <div className="mt-5 grid gap-5 md:grid-cols-2 md:max-w-3xl">
+            <Select label="Type of business" name="business_type" options={businessTypes} />
+            <Select label="Where are you?" name="place" options={places.length > 0 ? places : ["Somewhere else"]} />
+          </div>
+          <label className="mt-5 block max-w-4xl">
+            <span className="text-[15px]" style={{ fontFamily: sans }}>
+              What would you like to promote?
+            </span>
+            <textarea
+              required
+              name="message"
+              rows={5}
+              placeholder="A sentence or two is plenty."
+              className="mt-2 w-full border-2 border-black px-3 py-2 text-[15px] outline-none placeholder:text-neutral-500"
+              style={{ fontFamily: sans }}
+            />
+          </label>
+          {message ? (
+            <p className="mt-4 text-[15px]" style={{ fontFamily: sans }}>
+              {message}
+            </p>
+          ) : null}
+          <button
+            type="submit"
+            disabled={pending}
+            className="mt-6 bg-black px-4 py-2.5 text-[15px] text-white disabled:opacity-60"
+            style={{ fontFamily: sans, fontWeight: 650 }}
+          >
+            {pending ? "Sending…" : "Send enquiry"}
+          </button>
+        </form>
+      </section>
 
       {sent ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
-          onClick={() => setSent(false)}
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" onClick={() => setSent(false)}>
           <div
             role="alertdialog"
             aria-modal="true"
@@ -101,105 +200,44 @@ export default function ContactForm() {
           </div>
         </div>
       ) : null}
-
-      <div className="grid lg:grid-cols-[minmax(0,1.1fr)_minmax(22rem,36rem)]">
-        <section className="border-b-2 border-black px-5 py-8 sm:px-8 lg:border-r-2 lg:border-b-0 lg:py-12">
-          <h1
-            className="w-fit max-w-full text-[clamp(4.6rem,13vw,9rem)] leading-[0.78] tracking-[-0.055em] break-words hover:bg-[#FFE14A] hover:shadow-[0_0_0_0.7rem_#FFE14A]"
-            style={{ fontFamily: sans, fontWeight: 800 }}
-          >
-            Contact.
-          </h1>
-          <p
-            className="mt-6 max-w-[18rem] text-[clamp(1.45rem,2.6vw,2.15rem)] leading-[1.05]"
-            style={{ fontFamily: serif, fontStyle: "italic", fontWeight: 500 }}
-          >
-            Tell us about the business, and what you want on the page.
-          </p>
-          <div className="mt-10 border-2 border-black">
-            {reasons.map((reason) => (
-              <article key={reason.title} className="border-b-2 border-black px-4 py-4 last:border-b-0 sm:px-5">
-                <p className="text-[11px] uppercase tracking-[0.14em]" style={{ fontFamily: mono, fontWeight: 500 }}>
-                  {reason.label}
-                </p>
-                <h2 className="mt-1 text-[1.55rem] leading-none tracking-[-0.03em]" style={{ fontFamily: sans, fontWeight: 700 }}>
-                  {reason.title}
-                </h2>
-                <p className="mt-2 max-w-md text-[15px] leading-snug" style={{ fontFamily: sans }}>
-                  {reason.text}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <form onSubmit={onSubmit} className="flex flex-col">
-            <p
-              className="flex items-center justify-between bg-[#FFE14A] px-5 py-2 text-[11px] uppercase tracking-[0.14em] sm:px-6"
-              style={{ fontFamily: mono, fontWeight: 500 }}
-            >
-              <span>Your query</span>
-              <span>Four fields</span>
-            </p>
-            <Field label="Business name" name="business_name" placeholder="The name people should see" />
-            <Field label="Business email" name="business_email" type="email" placeholder="name@business.com" />
-            <Field label="Subject" name="subject" placeholder="Advertising, a listing, or a correction" />
-            <label className="block border-b-2 border-black lg:border-b-0">
-              <span className="block px-5 pt-4 text-[11px] uppercase tracking-[0.14em] sm:px-6" style={{ fontFamily: mono, fontWeight: 500 }}>
-                Message
-              </span>
-              <textarea
-                required
-                name="message"
-                rows={7}
-                placeholder="What should we know?"
-                className="w-full resize-y bg-white px-5 py-3 text-[16px] leading-relaxed outline-none placeholder:text-neutral-400 sm:px-6"
-                style={{ fontFamily: sans }}
-              />
-            </label>
-            {message ? (
-              <p className="border-t-2 border-black px-5 py-3 text-[15px] sm:px-6" style={{ fontFamily: sans }}>
-                {message}
-              </p>
-            ) : null}
-            <button
-              type="submit"
-              disabled={pending}
-              className="mt-auto bg-black px-5 py-4 text-left text-[16px] text-white disabled:opacity-60 sm:px-6"
-              style={{ fontFamily: sans, fontWeight: 650 }}
-            >
-              {pending ? "Sending…" : "Send query"}
-            </button>
-          </form>
-      </div>
     </main>
   );
 }
 
-function Field({
-  label,
-  name,
-  placeholder,
-  type = "text",
-}: {
-  label: string;
-  name: string;
-  placeholder: string;
-  type?: string;
-}) {
+function Field({ label, name, type = "text" }: { label: string; name: string; type?: string }) {
   return (
-    <label className="block border-b-2 border-black">
-      <span className="block px-5 pt-4 text-[11px] uppercase tracking-[0.14em] sm:px-6" style={{ fontFamily: mono, fontWeight: 500 }}>
+    <label className="block">
+      <span className="text-[15px]" style={{ fontFamily: sans }}>
         {label}
       </span>
       <input
         required
         type={type}
         name={name}
-        placeholder={placeholder}
-        className="h-12 w-full bg-white px-5 text-[16px] outline-none placeholder:text-neutral-400 sm:px-6"
+        className="mt-2 h-11 w-full border-2 border-black bg-white px-3 text-[15px] outline-none"
         style={{ fontFamily: sans }}
       />
+    </label>
+  );
+}
+
+function Select({ label, name, options }: { label: string; name: string; options: string[] }) {
+  return (
+    <label className="block">
+      <span className="text-[15px]" style={{ fontFamily: sans }}>
+        {label}
+      </span>
+      <select
+        required
+        name={name}
+        defaultValue={options[0]}
+        className="mt-2 h-11 w-full border-2 border-black bg-white px-3 text-[15px] outline-none"
+        style={{ fontFamily: sans }}
+      >
+        {options.map((option) => (
+          <option key={option}>{option}</option>
+        ))}
+      </select>
     </label>
   );
 }

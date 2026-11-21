@@ -32,6 +32,7 @@ export default async function EditPlacePage({ params }: { params: Promise<{ id: 
     local_authority: place.local_authority,
     closest_station: place.closest_station,
     closest_station_location: place.closest_station_location ?? "",
+    video: place.video ?? "",
     score: place.score,
     our_take: place.our_take,
     comment_to_be_displayed: place.comment_to_be_displayed,

@@ -13,6 +13,13 @@ type VisitInput = {
   activity?: string;
   time?: string;
   cost?: string;
+  article?: string;
+  best_time?: string;
+  go_if?: string[];
+  skip_if?: string[];
+  video?: string;
+  closest_station?: string;
+  closest_station_location?: string;
 };
 
 function jsonError(message: string, status: number) {
@@ -21,6 +28,19 @@ function jsonError(message: string, status: number) {
 
 function text(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function lines(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean)
+    .slice(0, 12)
+    .map((item) => item.slice(0, 180));
+}
+
+function hasVisibleText(value: string) {
+  return value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").trim().length > 0;
 }
 
 function visitId(value: string) {
@@ -35,9 +55,23 @@ async function readVisit(body: VisitInput | null) {
   const activity = text(body?.activity);
   const time = text(body?.time);
   const cost = text(body?.cost);
-  if (!name || !location || !tagline || !place_id || !activity || !time || !cost) {
-    return { error: "Every field is required." };
+  const article = text(body?.article);
+  const best_time = text(body?.best_time);
+  const go_if = lines(body?.go_if);
+  const skip_if = lines(body?.skip_if);
+  const video = text(body?.video);
+  const closest_station = text(body?.closest_station);
+  const closest_station_location = text(body?.closest_station_location);
+  if (!name || !location || !tagline || !place_id || !activity || !time || !cost || !hasVisibleText(article)) {
+    return { error: "Name, location, tagline, activity, time, cost, and article are required." };
   }
+  if (!best_time || !closest_station || !closest_station_location) {
+    return { error: "Best time, closest station, and station location are required." };
+  }
+  if (go_if.length === 0 || skip_if.length === 0) {
+    return { error: "Add at least one go-if line and one skip-if line." };
+  }
+  if (article.length > 20000) return { error: "The article is too long." };
   if (!visitId(place_id)) return { error: "Choose a place that exists." };
   const places = await getAdminPlacesCollection();
   const place = await places.findOne({ _id: new ObjectId(place_id) });
@@ -45,7 +79,25 @@ async function readVisit(body: VisitInput | null) {
   const counties = await getDirectoryListCollection("county");
   const county = await counties.findOne({ id: place.county_id });
   if (!county) return { error: "This place has no county." };
-  return { visit: { name, location, tagline, place_id, county: county.name, activity, time, cost } };
+  return {
+    visit: {
+      name,
+      location,
+      tagline,
+      place_id,
+      county: county.name,
+      activity,
+      time,
+      cost,
+      article,
+      best_time,
+      go_if,
+      skip_if,
+      video,
+      closest_station,
+      closest_station_location,
+    },
+  };
 }
 
 export async function POST(request: Request) {

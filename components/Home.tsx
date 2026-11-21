@@ -11,7 +11,7 @@ const serif = "var(--font-newsreader), Georgia, 'Times New Roman', serif";
 
 function linkHref(value: string | undefined) {
   const trimmed = (value ?? "").trim();
-  if (!trimmed) return "/contact";
+  if (!trimmed) return "/advertise";
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
   return `https://${trimmed}`;
 }
@@ -258,7 +258,7 @@ function AdRow({
         <p>{label}</p>
         <p>
           Advertisements ·{" "}
-          <Link href="/contact" className="underline">
+          <Link href="/advertise" className="underline">
             Advertise with us
           </Link>
         </p>
@@ -322,7 +322,7 @@ function AdRow({
               {pitch}
             </p>
             <Link
-              href="/contact"
+              href="/advertise"
               className="mt-5 self-start border-2 border-white px-3 py-1.5 text-[14px]"
               style={{ fontFamily: sans }}
             >

@@ -102,8 +102,11 @@ export default function TopBar() {
                 </BarLink>
               ))}
               <Link
-                href="/contact"
-                className="flex items-center whitespace-nowrap bg-black px-[1.15rem] text-[15px] leading-none text-white hover:bg-neutral-800"
+                href="/advertise"
+                aria-current={pathname === "/advertise" ? "page" : undefined}
+                className={`flex items-center whitespace-nowrap px-[1.15rem] text-[15px] leading-none ${
+                  pathname === "/advertise" ? "bg-[#FFD200] text-black" : "bg-black text-white hover:bg-neutral-800"
+                }`}
                 style={{
                   fontFamily: sans,
                   fontWeight: 500,
@@ -166,9 +169,12 @@ export default function TopBar() {
           })}
         </nav>
         <Link
-          href="/contact"
+          href="/advertise"
           onClick={() => setOpen(false)}
-          className="bg-black px-5 py-5 text-[1.15rem] leading-none text-white"
+          aria-current={pathname === "/advertise" ? "page" : undefined}
+          className={`px-5 py-5 text-[1.15rem] leading-none ${
+            pathname === "/advertise" ? "bg-[#FFD200] text-black" : "bg-black text-white"
+          }`}
           style={{ fontFamily: sans, fontWeight: 650 }}
         >
           Advertise with us

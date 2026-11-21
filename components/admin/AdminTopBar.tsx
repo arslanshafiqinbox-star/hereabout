@@ -16,6 +16,7 @@ const links = [
   { href: "/admin/advertisement", label: "Advertisement" },
   { href: "/admin/comments", label: "Comments" },
   { href: "/admin/contact", label: "Contact" },
+  { href: "/admin/advertise", label: "Advertise" },
 ];
 
 export function AdminTopBar() {

@@ -24,6 +24,7 @@ export type PublicComment = {
   overall: number;
   comment: string;
   place_id: string;
+  visit_id: string;
   approval: boolean;
   upcount: number;
   downcount: number;
@@ -47,6 +48,7 @@ export async function listCommentThreads(): Promise<PublicComment[]> {
     overall: doc.overall ?? commentOverall(doc.ratings),
     comment: doc.comment,
     place_id: doc.place_id,
+    visit_id: doc.visit_id ?? "",
     approval: doc.approval === true,
     upcount: doc.upcount,
     downcount: doc.downcount,

@@ -7,6 +7,7 @@ export type Place = {
   region: string;
   type: string;
   score: number;
+  video?: string;
 };
 
 export function placeSlug(name: string) {

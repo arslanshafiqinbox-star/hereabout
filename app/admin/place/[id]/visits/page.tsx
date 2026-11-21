@@ -27,7 +27,14 @@ export default async function PlaceVisitsPage({ params }: { params: Promise<{ id
     activity: visit.activity,
     time: visit.time,
     cost: visit.cost,
+    article: visit.article ?? "",
+    bestTime: visit.best_time ?? "",
+    goIf: visit.go_if ?? [],
+    skipIf: visit.skip_if ?? [],
+    video: visit.video ?? "",
+    closestStation: visit.closest_station ?? "",
+    closestStationLocation: visit.closest_station_location ?? "",
   }));
 
-  return <VisitManager placeName={place.name} placeId={id} county={county} rows={rows} />;
+  return <VisitManager placeName={place.name} placeId={id} rows={rows} />;
 }

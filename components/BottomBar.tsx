@@ -79,17 +79,12 @@ export default function BottomBar() {
           </h2>
           <ul className="mt-3 space-y-1">
             <li>
-              <Link href="/contact" className="text-[15px] underline" style={{ fontFamily: sans }}>
+              <Link href="/advertise" className="text-[15px] underline" style={{ fontFamily: sans }}>
                 Advertise with us
               </Link>
             </li>
             <li>
-              <Link href="/contact" className="text-[15px] underline" style={{ fontFamily: sans }}>
-                Advertising terms
-              </Link>
-            </li>
-            <li>
-              <Link href="/contact" className="text-[15px] underline" style={{ fontFamily: sans }}>
+              <Link href="/advertise" className="text-[15px] underline" style={{ fontFamily: sans }}>
                 ads@hereabouts.example
               </Link>
             </li>

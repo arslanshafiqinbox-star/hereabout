@@ -18,6 +18,7 @@ type PlaceInput = {
   local_authority?: string;
   closest_station?: string;
   closest_station_location?: string;
+  video?: string;
   score?: Partial<PlaceScoreDoc>;
   our_take?: string;
   comment_to_be_displayed?: string;
@@ -66,6 +67,7 @@ async function readPlace(body: PlaceInput | null) {
   const local_authority = text(body?.local_authority);
   const closest_station = text(body?.closest_station);
   const closest_station_location = text(body?.closest_station_location);
+  const video = text(body?.video);
   const our_take = text(body?.our_take);
   const comment_to_be_displayed = text(body?.comment_to_be_displayed);
   const primary_des = text(body?.primary_des);
@@ -101,6 +103,7 @@ async function readPlace(body: PlaceInput | null) {
       local_authority,
       closest_station,
       closest_station_location,
+      video,
       score,
       our_take,
       comment_to_be_displayed,

@@ -326,7 +326,7 @@ export default function PlacesToVisitView({
               Walks, museums, boat trips and workshops: reach people planning the day.
             </p>
             <Link
-              href="/contact"
+              href="/advertise"
               className="mt-4 inline-block border-2 border-white px-3 py-1.5 text-[14px] text-white hover:bg-white hover:text-black"
               style={{ fontFamily: sans, fontWeight: 500 }}
             >
